@@ -1,132 +1,102 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-import TweedrFeed from './TweedrFeed';
-import Input from './Input'
-import '../App.css';
+import moment from 'moment';
 
 
 class App extends Component {
-  constructor(){
+  constructor() {
     super();
-    this.state = {
-      tweeds: [],
-      value: '',
-    };
-    this.getTweeds =this.getTweeds.bind(this);
-    this.postTweeds = this.postTweeds.bind(this);
-    this.handleChange = this.handleChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.deleteTweeds = this.deleteTweeds.bind(this);
-   // this.updateTweeds = this.updateTweeds.bind(this)
-    //where we would bind functions
+    this.state = { todos: {} };
+
+    this.handleNewTodoInput = this.handleNewTodoInput.bind(this);
+    this.renderTodoList = this.renderTodoList.bind(this);
+    this.getTodos =this.getTodos.bind(this);
+    this.createTodo =this.createTodo.bind(this);
+    this.renderTodoList =this.renderTodoList.bind(this);
   }
 
 
-componentDidMount(){
-       this.getTweeds();
-      }
+ componentDidMount(){
+  this.getTodos();
+ }
 
-getTweeds() {
- const url = "https://tweedrme.firebaseio.com/tweeds/.json?print=pretty"
-  axios.get(url)
-  .then((res) => {
-       //console.log(res.data)
-       const info = res.data;
-       let tweeds =[];
-       if (info) {
-        tweeds = Object.keys(info).map((id) => {
-          const tweed = info[id]
-          //console.log(tweeds)
-          return {
-            tweed: tweed.tweed
-          };
-        });
-       }
-         tweeds.reverse();
-         this.setState({ tweeds });
-    })
-  .catch((error) => {
-    console.log(error);
-  })
-}
-
-
-
-postTweeds(){
-     const url = "https://tweedrme.firebaseio.com/tweeds/.json?print=pretty"
-     axios.post(url, {
-      tweed: this.state.value
-    })
-    .then(() =>{
-      this.getTweeds();
-      this.setState({value: '' })
-    })
-    .catch((error) => {
+getTodos(){
+   const url = "https://mytodo-95fee.firebaseio.com/list/.json?print=pretty"
+   axios.get(url)
+.then((response) => {
+  this.setState({todos:response.data});
+  }).catch((error) => {
       console.log(error);
-    })
+   })
+}
+
+  createTodo(todoText) {
+    let newTodo = {title: todoText, createdAt: new Date()};
+
+    const url = "https://mytodo-95fee.firebaseio.com/list/.json?print=pretty"
+    axios.post(url, {
+    data: newTodo
+   }).then((response) =>{
+       let todos = this.state.todos;
+       let newTodoId =response.data.name;
+       todos[newTodoId] = newTodo;
+       this.setState({todos:todos});
+    }).catch((error) => {
+    console.log(error);
+  });
+}
+
+renderTodoList () {
+  let todoElements = [];
+    for(let todoId in this.state.todos) {
+      let todo = this.state.todos[todoId];
+      todoElements.push(
+        <div className="todo d-flex justify-content-between pb-4" key={todoId}>
+          <div className="mt-2">
+            <h4>{todo.title}</h4>
+            <div>{moment(todo.createdAt).calendar()}</div>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="todo-list">
+        {todoElements}
+      </div>
+    );
   }
 
-updateTweeds(){
-  let newInput = document.createElement("INPUT");
-  //const url = "https://tweedrme.firebaseio.com/tweeds/.json?print=pretty"
- }
- /*
-  //axios.patch(`https://tweedrme.firebaseio.com/tweeds/${update}.json?print=pretty`,
-  //{tweed: this.state.value
-  })
-then((response)=> {
-  console.log(response);
-})
-.catch((error) => {
-    console.log(error);
-    })
-}
-*/
-deleteTweeds(){
-  //each data record has its own unique end point
-  //access the keys for each record
-   //axios.delete(`https://tweedrme.firebaseio.com/tweeds/${erase}.json?print=pretty`,
-  let listItems = document.querySelectorAll('li')
-
-
-console.log(listItems)
-}
 
 
 
-handleChange(event){
-   this.setState({value: event.target.value})
- }
+  handleNewTodoInput(event) {
+    if (event.charCode === 13) {
+      this.createTodo(event.target.value);
+      event.target.value = "";
+    }
+  }
 
-handleSubmit(event){
-  event.preventDefault();
-  this.postTweeds();
-}
 
-render(){
-  return(
-     <div className="App">
-          <nav className="navbar navbar-inverse fixed-top ">
-              <div className="container-fluid">
-                  <div className="bg-primary">
-                      <h1>Tweedr Me</h1>
-                  </div>
-              </div>
-          </nav>
-          <div className="container">
-            <Input
-                      writeTweed={this.handleChange}
-                       postTweedDB={this.handleSubmit}
-                       InputContent={this.state.value}
+  renderNewTodoBox() {
+    return (
+      <div className="new-todo-box pb-2">
+        <input className="w-100" placeholder="What do you have to do?" onKeyPress={ this.handleNewTodoInput } />
+      </div>
+    );
+  }
 
-              />
-             <TweedrFeed tweeds={this.state.tweeds}
-                  deleter={this.deleteTweeds}
-                  updater={this.updateTweeds}
-             />
-         </div>
+  render() {
+    return (
+      <div className="App container-fluid">
+        <div className="row pt-3">
+          <div className="col-6 px-4">
+            {this.renderNewTodoBox()}
+            {this.renderTodoList()}
+          </div>
+        </div>
       </div>
     );
   }
 }
+
 export default App;
