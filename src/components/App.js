@@ -56,6 +56,9 @@ renderTodoList () {
             <h4>{todo.title}</h4>
             <div>{moment(todo.createdAt).calendar()}</div>
           </div>
+          <button className="ml-4 btn btn-link"onClick={ () => {this.deleteTodo(todoId)}}>
+          <span aria-hidden="true">&time;</span>
+          </button>
         </div>
       );
     }
